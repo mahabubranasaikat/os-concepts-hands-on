@@ -1,36 +1,28 @@
-#include <windows.h>
 #include <iostream>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 using namespace std;
 
 int main() {
-    STARTUPINFOW si = {sizeof(si)};
-    PROCESS_INFORMATION pi;
+    pid_t pid = fork(); // Fork a new process
 
+    if (pid == -1) {
+        // Fork failed
+        cerr << "Failed to create process!" << endl;
+        return 1;
+    } else if (pid == 0) {
+        // Child process: Execute a program (e.g., open TextEdit on macOS)
+        execlp("open", "open", "-a", "TextEdit", NULL);
 
-    // Creating a new process (notepad.exe)
-    if (CreateProcessW(
-            L"C:\\Windows\\System32\\notepad.exe",  // Path to the executable
-            NULL,    // Command line arguments
-            NULL,    // Process security attributes
-            NULL,    // Thread security attributes
-            FALSE,   // Handle inheritance
-            0,       // Creation flags
-            NULL,    // Environment variables
-            NULL,    // Current directory
-            &si,     // Startup Info
-            &pi      // Process Information
-        )) {
-        // Process created successfully
-        cout << "Process created successfully. PID: " << pi.dwProcessId << endl;
-        
-
-        // Close process and thread handles.
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
+        // If execlp fails
+        cerr << "Failed to execute process!" << endl;
+        return 1;
     } else {
-        // Process creation failed
-        cerr << "Process creation failed. Error: " << GetLastError() << endl;
+        // Parent process: Wait for the child process to complete
+        cout << "Process created successfully. PID: " << pid << endl;
+        wait(NULL);
     }
 
     return 0;
